@@ -132,37 +132,44 @@ class Lexer(Error, sly.Lexer):
     reflags = re.UNICODE
 
     tokens = {
-        MODULE,
-        NAME,
-        NUMBER,
-        STRING,
-        STRIP_STRING,
         ATTRIBUTE,
-        MAP_UNPACK,
-        IS,
-        RETURN,
-        LET,
-        IF,
+        DEC,
+        DEF,
         ELSE,
         END,
-        DEF}
+        FLOAT,
+        HEX,
+        IF,
+        IS,
+        LET,
+        MAP_UNPACK,
+        MODULE,
+        NAME,
+        OCT,
+        RETURN,
+        STRING,
+        STRIP_STRING,
+    }
 
     literals = {";", ",", ".", ":", "_", "(", ")", "=", "[", "]", "{", "}", "|", "*", "/"}
 
-    MODULE = r'\:\:'
-    NUMBER = r'0[xX](?:[0-9A-Fa-f]+(?:\.[0-9A-Fa-f]*)?|\.[0-9A-Fa-f]+)(?:[pP][+-]?\d+)?|(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?'
 
     ATTRIBUTE = r'->'
+    DEC = r'[0-9]+'
+    FLOAT = r'(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?'
+    HEX = r'0x[0-9A-Fa-f]+'
+    OCT = r'0o[0-7]+'
     MAP_UNPACK = r'\*\*'
+    MODULE = r'\:\:'
 
     NAME = r'[a-zA-Z_][a-zA-Z0-9_]*'
+    NAME['def'] = DEF
+    NAME['else'] = ELSE
+    NAME['end'] = END
+    NAME['if'] = IF
     NAME['is'] = IS
     NAME['let'] = LET
     NAME['return'] = RETURN
-    NAME['if'] = IF
-    NAME['else'] = ELSE
-    NAME['end'] = END
-    NAME['def'] = DEF
 
     ignore = ' \t'
 
@@ -465,14 +472,21 @@ class Parser(Error, sly.Parser):
     def tuple_unpack_pat_not_exp(self, p):
        return Unpack(p, value=p[1])
 
-    @_('number',
+    @_('float',
+       'int',
        'string')
     def literal(self, p):
         return p[0]
 
-    @_('NUMBER')
-    def number(self, p):
+    @_('FLOAT')
+    def float(self, p):
         return Literal(p, value=float(p[0]))
+
+    @_('DEC',
+       'OCT',
+       'HEX')
+    def int(self, p):
+        return Literal(p, value=int(p[0]))
 
     @_('STRING',
        'STRIP_STRING')
