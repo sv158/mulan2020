@@ -37,6 +37,11 @@ class Expression(Condition):
 class Unpack(Node):
     value: Expression
 
+class If(Statement):
+    test: Condition
+    body: typing.List[Statement]
+    orelse: typing.List[Statement]
+
 class Module(Expression):
     level: int
     path: typing.List[str]
@@ -60,6 +65,7 @@ class Call(Expression):
 
 class Literal(Expression):
     value: typing.Union[int, float, str]
+
 
 class TreeVisitor(Visitor):
 
@@ -107,3 +113,11 @@ class TreeVisitor(Visitor):
     @_(parse.Literal)
     def visit(self, node):
         return Literal(node, value=node.value)
+
+    @_(parse.If)
+    def visit(self, node):
+        return If(
+            node,
+            test=self.visit(node.test),
+            body=[self.visit(s) for s in node.body],
+            orelse=[self.visit(s) for s in node.orelse])

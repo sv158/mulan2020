@@ -108,12 +108,10 @@ class Field(Node):
 class Dict(Expression):
     elts: typing.List[typing.Union[Field, Unpack]]
 
-
 class Call(Expression):
     func: Expression
     args: typing.List[typing.Union[Expression, Unpack]]
     keywords: typing.List[typing.Union[Keyword, Unpack]]
-
 
 class BinOp(Expression):
     left: Expression

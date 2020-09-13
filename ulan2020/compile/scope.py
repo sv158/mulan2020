@@ -16,6 +16,12 @@ class ScopeVisitor(Visitor):
             self.visit_scope(scope, symtable)
         node.symtable = symtable
 
+    @_(ast.If)
+    def visit(self, node, symtable):
+        yield from self.visit(node.test, symtable)
+        yield from self.visit(node.body, symtable)
+        yield from self.visit(node.orelse, symtable)
+
     @_(ast.Call)
     def visit(self, node, symtable):
         yield from self.visit(node.func, symtable)
@@ -25,8 +31,8 @@ class ScopeVisitor(Visitor):
     @_(ast.Module)
     def visit(self, node, symtable):
         node.slot = symtable.get_name_slot(".".join(node.path))
-        return
-        yield
+        if False:
+            yield
 
     @_(ast.ModuleAttribute)
     def visit(self, node, symtable):
@@ -35,7 +41,5 @@ class ScopeVisitor(Visitor):
 
     @_(ast.Literal)
     def visit(self, node, symtable):
-        return
-        yield
-
-
+        if False:
+            yield

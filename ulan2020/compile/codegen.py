@@ -1,6 +1,6 @@
 import os
 from .visit import Visitor
-from .asm import Assembler
+from .asm import Assembler, Label
 from . import ast
 
 class CodegenVisitor(Visitor):
@@ -33,6 +33,18 @@ class CodegenVisitor(Visitor):
             node.lineno,
             freenames,
             cellnames)
+
+    @_(ast.If)
+    def visit(self, node, asm):
+        self.visit(node.test, asm)
+        label1 = Label()
+        label2 = Label()
+        asm.POP_JUMP_IF_FALSE(label1)
+        self.visit(node.body, asm)
+        asm.JUMP_FORWARD(label2)
+        asm.emit(label1)
+        self.visit(node.orelse, asm)
+        asm.emit(label2)
 
     @_(ast.Call)
     def visit(self, node, asm):
