@@ -31,8 +31,8 @@ class TestCase(unittest.TestCase):
 class FileTest(TestCase):
 
     def test_print(self):
-        with self.assertPrints("ok\n"):
-            run("::print({[ok]});")
+        with self.assertPrints("ok"):
+            run("::print({[ok]}, end:{[]});")
 
     def test_if(self):
         with self.assertPrints("1\n"):

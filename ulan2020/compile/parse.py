@@ -721,7 +721,8 @@ class Parser(Error, sly.Parser):
     def keywords_pat_not_exp(self, p):
         return [p[0]]
 
-    @_('NAME ":" exp_and_pat')
+    @_('NAME ":" exp_and_pat',
+       'END ":" exp_and_pat')
     def keyword_exp_and_pat(self, p):
         return Keyword(p, arg=p[0], value=p[2])
 
@@ -729,7 +730,8 @@ class Parser(Error, sly.Parser):
     def keyword_exp_and_pat(self, p):
         return p[0]
 
-    @_('NAME ":" exp_not_pat')
+    @_('NAME ":" exp_not_pat',
+       'END ":" exp_not_pat')
     def keyword_exp_not_pat(self, p):
         return Keyword(p, arg=p[0], value=p[2])
 
@@ -737,12 +739,15 @@ class Parser(Error, sly.Parser):
     def keyword_exp_not_pat(self, p):
         return p[0]
 
-    @_('NAME ":" pat_not_exp')
+    @_('NAME ":" pat_not_exp',
+       'END ":" pat_not_exp')
     def keyword_pat_not_exp(self, p):
         return Keyword(p, arg=p[0], value=p[2])
 
     @_('NAME ":" exp_and_pat "=" exp',
-       'NAME ":" pat_not_exp "=" exp')
+       'END ":" exp_and_pat "=" exp',
+       'NAME ":" pat_not_exp "=" exp',
+       'END ":" pat_not_exp "=" exp')
     def keyword_pat_not_exp(self, p):
         return Keyword(p, arg=p[0], value=p[2], default=p[4])
 
@@ -883,7 +888,8 @@ class Parser(Error, sly.Parser):
     def name_keyword_pat(self, p):
         return p[0]
 
-    @_('NAME ":" pat')
+    @_('NAME ":" pat',
+       'END ":" pat')
     def keyword_pat(self, p):
         return Keyword(p, arg=p[0], value=p[2])
 

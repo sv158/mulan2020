@@ -110,6 +110,13 @@ class TreeVisitor(Visitor):
             args=[self.visit(e) for e in node.args],
             keywords=[self.visit(e) for e in node.keywords])
 
+    @_(parse.Keyword)
+    def visit(self, node):
+        return Keyword(
+            node,
+            arg=node.arg,
+            value=self.visit(node.value))
+
     @_(parse.Literal)
     def visit(self, node):
         return Literal(node, value=node.value)

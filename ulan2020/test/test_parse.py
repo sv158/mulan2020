@@ -247,3 +247,19 @@ class PatternTest(TestCase):
         self.parse("let f{a:b} = 1;")
         self.parse("let f{a:b=1} = 1;")
         self.parse("let f{a:b, c, **kw} = 1;")
+
+
+class SoftKeywordTest(TestCase):
+
+    def test_end(self):
+        self.parse("f(end:1);");
+        self.parse("f(end: (1));");
+        self.parse("f{end:1};");
+        self.parse("f{end: (1)};");
+        self.parse("let f(end:1) = 1;")
+        self.parse("let f(end:a=1) = 1;")
+        self.parse("let f(end:f(a=1)=1) = 1;")
+        self.parse("let f{end:1} = 1;")
+        self.parse("let f{end:a=1} = 1;")
+        self.parse("let f{end:f(a=1)=1} = 1;")
+        self.parse("def f(end: a): end")
