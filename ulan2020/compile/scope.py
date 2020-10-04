@@ -10,8 +10,7 @@ class ScopeVisitor(Visitor):
             yield from self.visit(subnode, symtable)
 
     @_(ast.File)
-    def visit(self, node):
-        symtable = SymbolTable()
+    def visit(self, node, symtable):
         for scope in self.visit(node.body, symtable):
             self.visit_scope(scope, symtable)
         node.symtable = symtable
