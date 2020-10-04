@@ -57,7 +57,7 @@ class Arguments(Node):
     kwonlyargs: typing.List[Expression]
     kwarg: typing.Optional[Unpack]
 
-class Function(Expression):
+class Function(Statement):
     name: Name
     args: Arguments
     body: typing.List[Statement]
@@ -253,6 +253,10 @@ class Parser(Error, sly.Parser):
     def stat(self, p):
         return Return(p, value=p[1])
 
+    @_('RETURN ";"')
+    def stat(self, p):
+        return Return(p, value=Literal(p, value=None))
+
     @_('IF condition ":" block ifstat')
     def stat(self, p):
         return If(
@@ -306,7 +310,6 @@ class Parser(Error, sly.Parser):
         return BinOp(p, left=p[0], op="is", right=p[2])
 
     @_('prefixexp_exp_not_pat',
-       'function',
        'binop',
        'unop')
     def exp_not_pat(self, p):
@@ -813,7 +816,7 @@ class Parser(Error, sly.Parser):
 
     @_('"(" arguments_pat ")"')
     def arguments(self, p):
-        return Arguments(args=p[1][0], vararg=p[1][1], kwonlyargs=p[1][2], kwarg=p[1][3])
+        return Arguments(p, args=p[1][0], vararg=p[1][1], kwonlyargs=p[1][2], kwarg=p[1][3])
 
     @_('name_keyword_pat "," arguments_pat')
     def arguments_pat(self, p):

@@ -39,9 +39,6 @@ class CodegenVisitor(Visitor):
         names, varnames, freenames, cellnames, freevars = node.symtable.get_slots()
         self.visit(node.body, asm)
 
-        asm.LOAD_CONST(None)
-        asm.RETURN_VALUE()
-
         flags = 0
         return asm.build(
             0,
@@ -69,6 +66,47 @@ class CodegenVisitor(Visitor):
         asm.emit(label1)
         self.visit(node.orelse, asm)
         asm.emit(label2)
+
+    @_(ast.Return)
+    def visit(self, node, asm):
+        self.visit(node.value, asm)
+        asm.RETURN_VALUE()
+
+    def visit_function(self, node, name, asm):
+        argcount = 0
+        names, varnames, freenames, cellnames, freevars = node.symtable.get_slots()
+
+        sub = Assembler()
+        self.visit(node.body, sub)
+
+        flags = 0
+        code = sub.build(
+            argcount,
+            flags,
+            names,
+            varnames,
+            self.filename,
+            os.path.basename(self.filename),
+            node.lineno,
+            freenames,
+            cellnames)
+
+        flags = 0
+
+        if freevars:
+            for freevar in freevars:
+                asm.LOAD_CLOSURE(freevar.parent.slot)
+            asm.BUILD_TUPLE(len(freevars))
+            flags |= 0x08
+
+        asm.LOAD_CONST(code)
+        asm.LOAD_CONST(name)
+        asm.MAKE_FUNCTION(flags)
+
+    @_(ast.Function)
+    def visit(self, node, asm):
+        self.visit_function(node, node.name.s, asm)
+        self.visit_symbol(node.name.symbol, asm, Store)
 
     @_(ast.Call)
     def visit(self, node, asm):

@@ -36,13 +36,30 @@ class File(Node):
 class Expression(Condition):
     pass
 
+class Name(Expression):
+    s: str
+
 class Unpack(Node):
     value: Expression
+
+class Arguments(Node):
+    args: typing.List[Expression]
+    vararg: typing.Optional[Unpack]
+    kwonlyargs: typing.List[Expression]
+    kwarg: typing.Optional[Unpack]
+
+class Function(Statement):
+    name: Name
+    args: Arguments
+    body: typing.List[Statement]
 
 class If(Statement):
     test: Condition
     body: typing.List[Statement]
     orelse: typing.List[Statement]
+
+class Return(Statement):
+    value: Expression
 
 class Module(Expression):
     level: int
@@ -67,9 +84,6 @@ class Call(Expression):
 
 class Literal(Expression):
     value: typing.Union[int, float, str]
-
-class Name(Expression):
-    s: str
 
 class Match(Condition):
     pattern: Pattern
@@ -140,6 +154,23 @@ class TreeVisitor(Visitor):
     def visit(self, node):
         return Name(node, s=node.s)
 
+    @_(parse.Arguments)
+    def visit(self, node):
+        return Arguments(
+            node,
+            args=[self.visit(s) for s in node.args],
+            vararg=None if node.kwarg is None else self.visit(node.vararg),
+            kwonlyargs=[self.visit(s) for s in node.kwonlyargs],
+            kwarg=None if node.kwarg is None else self.visit(node.kwarg))
+
+    @_(parse.Function)
+    def visit(self, node):
+        return Function(
+            node,
+            name=self.visit(node.name),
+            args=self.visit(node.args),
+            body=[self.visit(s) for s in node.body])
+
     @_(parse.If)
     def visit(self, node):
         return If(
@@ -147,6 +178,12 @@ class TreeVisitor(Visitor):
             test=self.visit(node.test),
             body=[self.visit(s) for s in node.body],
             orelse=[self.visit(s) for s in node.orelse])
+
+    @_(parse.Return)
+    def visit(self, node):
+        return Return(
+            node,
+            value=self.visit(node.value))
 
     @_(parse.Match)
     def visit(self, node):

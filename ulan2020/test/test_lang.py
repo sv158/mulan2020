@@ -63,3 +63,6 @@ class FileTest(TestCase):
     def test_unsafe(self):
         with self.assertRaises(NameError):
             run("if let 1 = 2: let x = 2; end ::print(x);")
+
+    def test_function(self):
+        self.assertEqual(run("def f(): return 1; end")['f'](), 1)

@@ -12,8 +12,12 @@ class Assembler:
         self.max_stacksize = 0
 
     def build(self, argcount, flags, names, varnames, filename, name, firstlineno, freevars, cellvars):
-        # flags = self.CO_VARARGS | self.CO_NEWLOCALS
-        flags |= self.CO_OPTIMIZED
+        if self.stacksize is not None:
+            self.LOAD_CONST(None)
+            self.RETURN_VALUE()
+
+        # flags = self.CO_VARARGS
+        flags |= self.CO_OPTIMIZED | self.CO_NEWLOCALS
         if not freevars and not cellvars:
             flags |= self.CO_NOFREE
         elif freevars:
@@ -64,5 +68,6 @@ class Assembler:
 
     @stacksize.setter
     def stacksize(self, value):
+        assert value is None or value >= 0
         self._stacksize = value
         self.max_stacksize = max(self.max_stacksize, value or 0)

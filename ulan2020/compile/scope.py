@@ -23,6 +23,22 @@ class ScopeVisitor(Visitor):
             yield from self.visit(node.body, symtable1)
             yield from self.visit(node.orelse, symtable2)
 
+    @_(ast.Return)
+    def visit(self, node, symtable):
+        self.visit(node.value, symtable)
+        if False:
+            yield
+
+    @_(ast.Arguments)
+    def visit(self, node, symtable):
+        if False:
+            yield
+
+    @_(ast.Function)
+    def visit(self, node, symtable):
+        self.visit_new(node.name, symtable)
+        yield node
+
     @_(ast.Call)
     def visit(self, node, symtable):
         yield from self.visit(node.func, symtable)
@@ -97,3 +113,15 @@ class ScopeVisitor(Visitor):
 
         if False:
             yield
+
+    @_(ast.Name)
+    def visit_new(self, node, symtable):
+        node.symbol = symtable.declare(node.s)
+        symtable[node.s] = node.symbol
+
+    @_(ast.Function)
+    def visit_scope(self, node, symtable):
+        node.symtable = SymbolTable(symtable)
+        self.visit(node.args, node.symtable)
+        for scope in self.visit(node.body, node.symtable):
+            self.visit_scope(scope, symtable)
