@@ -10,7 +10,7 @@ def extended_length(n):
     return count
 
 
-_stack_effect = {
+_stack_effects = {
     opmap["BREAK_LOOP"]: (0, None, 0),
     opmap["CONTINUE_LOOP"]: (0, None, 0),
     opmap["JUMP_ABSOLUTE"]: (0, None, 0),
@@ -19,9 +19,18 @@ _stack_effect = {
     opmap["JUMP_IF_TRUE_OR_POP"]: (1, -1, 0),
     opmap["POP_JUMP_IF_FALSE"]: (1, -1, -1),
     opmap["POP_JUMP_IF_TRUE"]: (1, -1, -1),
+    opmap["SETUP_EXCEPT"]: (0, 0, 3),
     opmap["RETURN_VALUE"]: (1, None,),
     opmap["RAISE_VARARGS"]: None
 }
+
+def _stack_effect(op, arg):
+    effect = _stack_effects[op]
+    if effect is not None:
+        return effect
+    if op == opmap["RAISE_VARARGS"]:
+        return (arg, None)
+    raise NotImplementedError
 
 class Instruction:
     offset = 0
@@ -76,17 +85,17 @@ class Instruction:
         consts.append(self._arg)
 
     def apply_stack_effect(self, stacksize):
-        if self._op not in _stack_effect:
+        if self._op not in _stack_effects:
             assert stacksize is not None
             if self._op < HAVE_ARGUMENT:
                 return stacksize + stack_effect(self._op)
             else:
                 return stacksize + stack_effect(self._op, self.arg)
-        effect = _stack_effect[self._op]
+        effect = _stack_effect(self._op, self.arg)
         assert stacksize >= effect[0]
         if len(effect) > 2:
             self._arg.stacksize = stacksize + effect[2]
-        return effect[1] if effect[1] is None else stacksize + effect[1]
+        return None if effect[1] is None else stacksize + effect[1]
 
 class Label:
     offset = 0

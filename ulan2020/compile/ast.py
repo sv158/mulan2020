@@ -21,6 +21,8 @@ class Node:
                 if hasattr(self, key))
         )
 
+class Pattern(Node):
+    pass
 
 class Statement(Node):
     pass
@@ -65,6 +67,19 @@ class Call(Expression):
 
 class Literal(Expression):
     value: typing.Union[int, float, str]
+
+class Name(Expression):
+    s: str
+
+class Match(Condition):
+    pattern: Pattern
+    value: Expression
+
+class LiteralPattern(Pattern):
+    value: typing.Union[int, float, str]
+
+class NamePattern(Pattern):
+    s: str
 
 
 class TreeVisitor(Visitor):
@@ -121,6 +136,10 @@ class TreeVisitor(Visitor):
     def visit(self, node):
         return Literal(node, value=node.value)
 
+    @_(parse.Name)
+    def visit(self, node):
+        return Name(node, s=node.s)
+
     @_(parse.If)
     def visit(self, node):
         return If(
@@ -128,3 +147,18 @@ class TreeVisitor(Visitor):
             test=self.visit(node.test),
             body=[self.visit(s) for s in node.body],
             orelse=[self.visit(s) for s in node.orelse])
+
+    @_(parse.Match)
+    def visit(self, node):
+        return Match(
+            node,
+            pattern=self.visit_pattern(node.pattern),
+            value=self.visit(node.value))
+
+    @_(parse.Literal)
+    def visit_pattern(self, node):
+        return LiteralPattern(node, value=node.value)
+
+    @_(parse.Name)
+    def visit_pattern(self, node):
+        return NamePattern(node, s=node.s)
