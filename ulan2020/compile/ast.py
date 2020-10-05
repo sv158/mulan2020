@@ -42,6 +42,15 @@ class Name(Expression):
 class Unpack(Node):
     value: Expression
 
+class Tuple(Expression):
+    elts: typing.List[typing.Union[Expression, Unpack]]
+
+class List(Expression):
+    elts: typing.List[typing.Union[Expression, Unpack]]
+
+class Set(Expression):
+    elts: typing.List[typing.Union[Expression, Unpack]]
+
 class UnpackPattern(Node):
     value: Pattern
 
@@ -148,6 +157,18 @@ class TreeVisitor(Visitor):
             node,
             value=self.visit(node.value),
             slice=self.visit(node.slice))
+
+    @_(parse.Tuple)
+    def visit(self, node):
+        return Tuple(node, elts=[self.visit(e) for e in node.elts])
+
+    @_(parse.List)
+    def visit(self, node):
+        return List(node, elts=[self.visit(e) for e in node.elts])
+
+    @_(parse.Set)
+    def visit(self, node):
+        return Set(node, elts=[self.visit(e) for e in node.elts])
 
     @_(parse.Call)
     def visit(self, node):

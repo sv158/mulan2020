@@ -183,6 +183,81 @@ class CodegenVisitor(Visitor):
         self.visit_function(node, node.name.s, asm)
         self.visit_symbol(node.name.symbol, asm, Store)
 
+    @_(ast.Tuple)
+    def visit(self, node, asm):
+        argcount = 0
+        tuplecount = 0
+        for arg in node.elts:
+            if isinstance(arg, ast.Unpack):
+                if argcount:
+                    asm.BUILD_TUPLE(argcount)
+                    argcount = 0
+                    tuplecount += 1
+                self.visit(arg.value, asm)
+                tuplecount += 1
+            else:
+                self.visit(arg, asm)
+                argcount += 1
+
+        if tuplecount:
+            if argcount:
+                asm.BUILD_TUPLE(argcount)
+                argcount = 0
+                tuplecount += 1
+            asm.BUILD_TUPLE_UNPACK(tuplecount)
+        else:
+            asm.BUILD_TUPLE(argcount)
+
+    @_(ast.List)
+    def visit(self, node, asm):
+        argcount = 0
+        tuplecount = 0
+        for arg in node.elts:
+            if isinstance(arg, ast.Unpack):
+                if argcount:
+                    asm.BUILD_LIST(argcount)
+                    argcount = 0
+                    tuplecount += 1
+                self.visit(arg.value, asm)
+                tuplecount += 1
+            else:
+                self.visit(arg, asm)
+                argcount += 1
+
+        if tuplecount:
+            if argcount:
+                asm.BUILD_LIST(argcount)
+                argcount = 0
+                tuplecount += 1
+            asm.BUILD_LIST_UNPACK(tuplecount)
+        else:
+            asm.BUILD_LIST(argcount)
+
+    @_(ast.Set)
+    def visit(self, node, asm):
+        argcount = 0
+        tuplecount = 0
+        for arg in node.elts:
+            if isinstance(arg, ast.Unpack):
+                if argcount:
+                    asm.BUILD_SET(argcount)
+                    argcount = 0
+                    tuplecount += 1
+                self.visit(arg.value, asm)
+                tuplecount += 1
+            else:
+                self.visit(arg, asm)
+                argcount += 1
+
+        if tuplecount:
+            if argcount:
+                asm.BUILD_SET(argcount)
+                argcount = 0
+                tuplecount += 1
+            asm.BUILD_SET_UNPACK(tuplecount)
+        else:
+            asm.BUILD_SET(argcount)
+
     @_(ast.Call)
     def visit(self, node, asm):
         self.visit(node.func, asm)

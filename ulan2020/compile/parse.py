@@ -540,10 +540,13 @@ class Parser(Error, sly.Parser):
     def list_pat_not_exp(self, p):
         return List(p, elts=p[1])
 
-    @_('"{" "/" "}"',
-    '"{" tuple_args_exp_and_pat "}"')
+    @_('"{" "/" "}"')
     def set_exp_and_pat(self, p):
         return Set(p, elts=[])
+
+    @_('"{" tuple_args_exp_and_pat "}"')
+    def set_exp_and_pat(self, p):
+        return Set(p, elts=p[1])
 
     @_('"{" tuple_args_exp_not_pat "}"')
     def set_exp_not_pat(self, p):

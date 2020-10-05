@@ -104,3 +104,15 @@ class FileTest(TestCase):
 
     def test_subscript(self):
         self.assertEqual(run("let x = {[ok]}[0];")["x"], "o")
+
+    def test_tuple(self):
+        self.assertEqual(run("let x = ();")["x"], ())
+        self.assertEqual(run("let x = (1, 2);")["x"], (1, 2))
+
+    def test_list(self):
+        self.assertEqual(run("let x = [];")["x"], [])
+        self.assertEqual(run("let x = [1, 2];")["x"], [1, 2])
+
+    def test_set(self):
+        self.assertEqual(run("let x = {/};")["x"], set())
+        self.assertEqual(run("let x = {1, 2};")["x"], {1, 2})

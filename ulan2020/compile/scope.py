@@ -88,6 +88,11 @@ class ScopeVisitor(Visitor):
         yield from self.visit(node.value, symtable)
         yield from self.visit(node.slice, symtable)
 
+    @_(ast.Tuple, ast.List, ast.Set)
+    def visit(self, node, symtable):
+        for e in node.elts:
+            yield from self.visit(e, symtable)
+
     @_(ast.Keyword)
     def visit(self, node, symtable):
         yield from self.visit(node.value, symtable)
