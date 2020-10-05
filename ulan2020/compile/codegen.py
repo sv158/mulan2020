@@ -254,6 +254,12 @@ class CodegenVisitor(Visitor):
         asm.ROT_TWO()
         asm.POP_TOP()
 
+    @_(ast.Module)
+    def visit(self, node, asm):
+        asm.LOAD_CONST(node.level)
+        asm.LOAD_CONST(None)
+        asm.IMPORT_NAME(node.slot)
+
     @_(ast.Literal)
     def visit(self, node, asm):
         asm.LOAD_CONST(node.value)

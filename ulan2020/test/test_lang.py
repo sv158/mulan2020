@@ -91,3 +91,10 @@ class FileTest(TestCase):
         self.assertEqual(run("def f(*, b=1): return b; end")['f'](), 1)
 
         self.assertEqual(run("def f(**kw): return kw; end")['f'](a=1), {"a":1})
+
+    def test_module(self):
+        import builtins
+        self.assertIs(run("let x = ::;")["x"], builtins)
+
+    def test_modattr(self):
+        self.assertIs(run("let x = ::print;")["x"], print)
