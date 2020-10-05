@@ -260,6 +260,11 @@ class CodegenVisitor(Visitor):
         asm.LOAD_CONST(None)
         asm.IMPORT_NAME(node.slot)
 
+    @_(ast.Attribute)
+    def visit(self, node, asm):
+        self.visit(node.value, asm)
+        asm.LOAD_ATTR(node.slot)
+
     @_(ast.Literal)
     def visit(self, node, asm):
         asm.LOAD_CONST(node.value)

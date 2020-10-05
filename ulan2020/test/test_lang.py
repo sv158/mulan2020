@@ -98,3 +98,6 @@ class FileTest(TestCase):
 
     def test_modattr(self):
         self.assertIs(run("let x = ::print;")["x"], print)
+
+    def test_attribute(self):
+        self.assertIs(run("let builtins = ::; let x = builtins->print;")["x"], print)

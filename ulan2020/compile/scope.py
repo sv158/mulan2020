@@ -78,6 +78,11 @@ class ScopeVisitor(Visitor):
         if False:
             yield
 
+    @_(ast.Attribute)
+    def visit(self, node, symtable):
+        yield from self.visit(node.value, symtable)
+        node.slot = symtable.get_name_slot(node.identifier)
+
     @_(ast.Keyword)
     def visit(self, node, symtable):
         yield from self.visit(node.value, symtable)
