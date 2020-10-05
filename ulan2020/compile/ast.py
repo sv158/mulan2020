@@ -42,11 +42,14 @@ class Name(Expression):
 class Unpack(Node):
     value: Expression
 
+class UnpackPattern(Node):
+    value: Pattern
+
 class Arguments(Node):
-    args: typing.List[Expression]
-    vararg: typing.Optional[Unpack]
-    kwonlyargs: typing.List[Expression]
-    kwarg: typing.Optional[Unpack]
+    args: typing.List[Pattern]
+    vararg: typing.Optional[UnpackPattern]
+    kwonlyargs: typing.List[Pattern]
+    kwarg: typing.Optional[UnpackPattern]
 
 class Function(Statement):
     name: Name
@@ -95,6 +98,10 @@ class LiteralPattern(Pattern):
 class NamePattern(Pattern):
     s: str
 
+class KeywordPattern(Pattern):
+    arg: str
+    value: Pattern
+    default: typing.Optional[Expression]
 
 class TreeVisitor(Visitor):
 
@@ -158,10 +165,10 @@ class TreeVisitor(Visitor):
     def visit(self, node):
         return Arguments(
             node,
-            args=[self.visit(s) for s in node.args],
-            vararg=None if node.kwarg is None else self.visit(node.vararg),
-            kwonlyargs=[self.visit(s) for s in node.kwonlyargs],
-            kwarg=None if node.kwarg is None else self.visit(node.kwarg))
+            args=[self.visit_pattern(s) for s in node.args],
+            vararg=None if node.vararg is None else self.visit_pattern(node.vararg.value),
+            kwonlyargs=[self.visit_pattern(s) for s in node.kwonlyargs],
+            kwarg=None if node.kwarg is None else self.visit_pattern(node.kwarg.value))
 
     @_(parse.Function)
     def visit(self, node):
@@ -199,3 +206,11 @@ class TreeVisitor(Visitor):
     @_(parse.Name)
     def visit_pattern(self, node):
         return NamePattern(node, s=node.s)
+
+    @_(parse.Keyword)
+    def visit_pattern(self, node):
+        return KeywordPattern(
+            node,
+            arg=node.arg,
+            value=self.visit_pattern(node.value),
+            default=None if getattr(node, 'default', None) is None else self.visit(node.default))

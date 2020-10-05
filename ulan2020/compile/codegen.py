@@ -16,7 +16,6 @@ class CodegenVisitor(Visitor):
 
         getattr(asm, f'{context}_{scope}')(symbol.slot)
 
-
     @_(list)
     def visit(self, node, asm):
         for subnode in node:
@@ -41,6 +40,7 @@ class CodegenVisitor(Visitor):
 
         flags = 0
         return asm.build(
+            0,
             0,
             flags,
             names,
@@ -73,15 +73,63 @@ class CodegenVisitor(Visitor):
         asm.RETURN_VALUE()
 
     def visit_function(self, node, name, asm):
-        argcount = 0
         names, varnames, freenames, cellnames, freevars = node.symtable.get_slots()
-
         sub = Assembler()
-        self.visit(node.body, sub)
 
         flags = 0
+
+        label_exc = Label()
+        label_body = Label()
+
+        for pat in node.args.args:
+            self.visit(pat.value, sub)
+            sub.LOAD_ATTR(node.slot)
+            sub.LOAD_FAST(pat.symbol.slot)
+            sub.CALL_FUNCTION(1)
+            sub.POP_JUMP_IF_FALSE(label_exc)
+
+        if node.args.vararg is not None:
+            flags |= sub.CO_VARARGS
+            self.visit(node.args.vararg, sub)
+            sub.LOAD_ATTR(node.slot)
+            sub.LOAD_FAST(node.vararg.slot)
+            sub.CALL_FUNCTION(1)
+            sub.POP_JUMP_IF_FALSE(label_exc)
+
+        for pat in node.args.kwonlyargs:
+            self.visit(pat.value, sub)
+            sub.LOAD_ATTR(node.slot)
+            sub.LOAD_FAST(pat.symbol.slot)
+            sub.CALL_FUNCTION(1)
+            sub.POP_JUMP_IF_FALSE(label_exc)
+
+        if node.args.kwarg is not None:
+            flags |= sub.CO_VARKEYWORDS
+            self.visit(node.args.kwarg, sub)
+            sub.LOAD_ATTR(node.slot)
+            sub.LOAD_FAST(node.kwarg.slot)
+            sub.CALL_FUNCTION(1)
+            sub.POP_JUMP_IF_FALSE(label_exc)
+
+        if label_exc.stacksize is not None:
+            sub.JUMP_FORWARD(label_body)
+            sub.emit(label_exc)
+            sub.LOAD_GLOBAL(node.exc.slot)
+            for pat in node.args.args:
+                sub.LOAD_FAST(pat.symbol.slot)
+            sub.BUILD_TUPLE(len(node.args.args))
+            if node.args.vararg is not None:
+                sub.LOAD_FAST(node.vararg.slot)
+                sub.BUILD_TUPLE_UNPACK(2)
+            sub.CALL_FUNCTION(1)
+            sub.RAISE_VARARGS(1)
+            sub.emit(label_body)
+
+        self.visit(node.body, sub)
+
         code = sub.build(
-            argcount,
+            len(node.args.args),
+            len(node.args.kwonlyargs),
             flags,
             names,
             varnames,
@@ -92,6 +140,21 @@ class CodegenVisitor(Visitor):
             cellnames)
 
         flags = 0
+
+        defaults = [pat.default for pat in node.args.args if getattr(pat, 'default', None) is not None]
+        if defaults:
+            for default in defaults:
+                self.visit(default, asm)
+            asm.BUILD_TUPLE(len(defaults))
+            flags |= 0x01
+
+        defaults = [pat for pat in node.args.kwonlyargs if getattr(pat, 'default', None) is not None]
+        if defaults:
+            for pat in defaults:
+                self.visit(pat.default, asm)
+            asm.LOAD_CONST(tuple(pat.arg for pat in defaults))
+            asm.BUILD_CONST_KEY_MAP(len(defaults))
+            flags |= 0x02
 
         if freevars:
             for freevar in freevars:

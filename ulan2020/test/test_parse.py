@@ -165,6 +165,7 @@ class ExpressionTest(TestCase):
         self.parse("def f(a, b=1, *c): end")
         self.parse("def f(a, b=1, *c, d=1): end")
         self.parse("def f(a, b=1, *c, d=1, e): end")
+        self.parse("def f(a, *, b): end")
 
         self.parse("def f(**kw): end")
         self.parse("def f(a, **kw): end")
@@ -226,6 +227,7 @@ class PatternTest(TestCase):
         self.parse("let {1: a} = 1;")
         self.parse("let {1: a, **b} = 1;")
         self.parse("let {1: a, **b, 2:c} = 1;")
+        self.parse("let {1: a=2} = 1;")
 
     def test_cons(self):
         self.parse("let std::int(x) = 1;")

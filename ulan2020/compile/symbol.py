@@ -81,7 +81,7 @@ class SymbolTable:
 
     def declare(self, name):
         if self.parent is not None:
-            symbol = Local(name)
+            symbol = Local("$" + name)
             self.symbols.append(symbol)
         else:
             symbol = self.get_global(name)

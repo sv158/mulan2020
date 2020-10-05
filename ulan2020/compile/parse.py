@@ -850,6 +850,10 @@ class Parser(Error, sly.Parser):
     def arguments_pat_vararg(self, p):
         return (p[0], [], None)
 
+    @_('"*" "," arguments_pat_kwonly')
+    def arguments_pat_vararg(self, p):
+        return (None,) + p[2]
+
     @_('arguments_pat_kwarg')
     def arguments_pat_vararg(self, p):
         return (None, [], p[0])

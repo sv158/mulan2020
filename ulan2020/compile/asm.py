@@ -11,7 +11,7 @@ class Assembler:
         self._stacksize = 0
         self.max_stacksize = 0
 
-    def build(self, argcount, flags, names, varnames, filename, name, firstlineno, freevars, cellvars):
+    def build(self, argcount, kwonlyargcount, flags, names, varnames, filename, name, firstlineno, freevars, cellvars):
         if self.stacksize is not None:
             self.LOAD_CONST(None)
             self.RETURN_VALUE()
@@ -29,7 +29,7 @@ class Assembler:
 
         return CodeType(
             argcount,
-            0,
+            kwonlyargcount,
             len(varnames) + len(cellvars),
             self.max_stacksize,
             flags,

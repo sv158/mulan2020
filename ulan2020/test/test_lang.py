@@ -64,5 +64,30 @@ class FileTest(TestCase):
         with self.assertRaises(NameError):
             run("if let 1 = 2: let x = 2; end ::print(x);")
 
-    def test_function(self):
+    def test_arguments(self):
         self.assertEqual(run("def f(): return 1; end")['f'](), 1)
+        self.assertEqual(run("def f(a): return a; end")['f'](a=1), 1)
+        self.assertEqual(run("def f(a): return a; end")['f'](1), 1)
+
+        with self.assertRaises(MatchException):
+            run("def f(a:2): return 1; end")['f'](1)
+
+        self.assertEqual(run("def f(b=1): return b; end")['f'](), 1)
+        self.assertEqual(run("def f(b=1): return b; end")['f'](2), 2)
+
+        with self.assertRaises(MatchException):
+            run("def f(a, b: a=2): end")['f'](1)
+
+        self.assertEqual(run("def f(*a): return a; end")['f'](1,2,3), (1,2,3))
+
+        with self.assertRaises(MatchException):
+            run("def f(a:2, *args): end")['f'](1, 2, 3)
+
+        self.assertEqual(run("def f(*, b): return b; end")['f'](b=1), 1)
+        with self.assertRaises(TypeError):
+            run("def f(*, b): return b; end")['f'](1)
+        with self.assertRaises(MatchException):
+            run("def f(*, b:1): return 1; end")['f'](b=2)
+        self.assertEqual(run("def f(*, b=1): return b; end")['f'](), 1)
+
+        self.assertEqual(run("def f(**kw): return kw; end")['f'](a=1), {"a":1})

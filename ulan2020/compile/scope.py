@@ -11,7 +11,8 @@ class ScopeVisitor(Visitor):
 
     @_(ast.File)
     def visit(self, node, symtable):
-        for scope in self.visit(node.body, symtable):
+        scopes = list(self.visit(node.body, symtable))
+        for scope in scopes:
             self.visit_scope(scope, symtable)
         node.symtable = symtable
 
@@ -24,17 +25,28 @@ class ScopeVisitor(Visitor):
 
     @_(ast.Return)
     def visit(self, node, symtable):
-        self.visit(node.value, symtable)
-        if False:
-            yield
+        yield from self.visit(node.value, symtable)
 
     @_(ast.Arguments)
     def visit(self, node, symtable):
-        if False:
-            yield
+        for pat in node.args:
+            yield from self.visit(pat.value, symtable)
+        if node.vararg is not None:
+            yield from self.visit(node.vararg, symtable)
+        for pat in node.kwonlyargs:
+            yield from self.visit(pat.value, symtable)
+        if node.kwarg is not None:
+            yield from self.visit(node.kwarg, symtable)
 
     @_(ast.Function)
     def visit(self, node, symtable):
+        for pat in node.args.args:
+            if getattr(pat, 'default', None) is not None:
+                yield from self.visit(pat.default, symtable)
+        for pat in node.args.kwonlyargs:
+            if getattr(pat, 'default', None) is not None:
+                yield from self.visit(pat.default, symtable)
+
         self.visit_new(node.name, symtable)
         yield node
 
@@ -121,6 +133,26 @@ class ScopeVisitor(Visitor):
     @_(ast.Function)
     def visit_scope(self, node, symtable):
         node.symtable = SymbolTable(symtable)
-        self.visit(node.args, node.symtable)
-        for scope in self.visit(node.body, node.symtable):
+        node.slot = node.symtable.get_name_slot("__umatch__")
+        node.exc = node.symtable.get_global(".MatchException")
+
+        scopes = []
+        for pat in node.args.args:
+            pat.symbol = Local(pat.arg)
+            node.symtable.symbols.append(pat.symbol)
+        if node.args.vararg is not None:
+            symbol = Local("*")
+            node.symtable.symbols.append(symbol)
+            node.vararg = symbol
+        for pat in node.args.kwonlyargs:
+            pat.symbol = Local(pat.arg)
+            node.symtable.symbols.append(pat.symbol)
+        if node.args.kwarg is not None:
+            symbol = Local("**")
+            node.symtable.symbols.append(symbol)
+            node.kwarg = symbol
+
+        scopes.extend(self.visit(node.args, node.symtable))
+        scopes.extend(self.visit(node.body, node.symtable))
+        for scope in scopes:
             self.visit_scope(scope, symtable)
