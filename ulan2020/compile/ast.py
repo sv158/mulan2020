@@ -76,6 +76,10 @@ class Attribute(Expression):
     value: Expression
     identifier: str
 
+class Subscript(Expression):
+    value: Expression
+    slice: Expression
+
 class Keyword(Expression):
     arg: str
     value: Expression
@@ -137,6 +141,13 @@ class TreeVisitor(Visitor):
         if isinstance(value, Module):
             return ModuleAttribute(node, value=value, identifier=node.identifier)
         return Attribute(node, value=value, identifier=node.identifier)
+
+    @_(parse.Subscript)
+    def visit(self, node):
+        return Subscript(
+            node,
+            value=self.visit(node.value),
+            slice=self.visit(node.slice))
 
     @_(parse.Call)
     def visit(self, node):

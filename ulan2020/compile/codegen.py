@@ -265,6 +265,12 @@ class CodegenVisitor(Visitor):
         self.visit(node.value, asm)
         asm.LOAD_ATTR(node.slot)
 
+    @_(ast.Subscript)
+    def visit(self, node, asm):
+        self.visit(node.value, asm)
+        self.visit(node.slice, asm)
+        asm.BINARY_SUBSCR()
+
     @_(ast.Literal)
     def visit(self, node, asm):
         asm.LOAD_CONST(node.value)

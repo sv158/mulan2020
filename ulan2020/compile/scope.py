@@ -83,6 +83,11 @@ class ScopeVisitor(Visitor):
         yield from self.visit(node.value, symtable)
         node.slot = symtable.get_name_slot(node.identifier)
 
+    @_(ast.Subscript)
+    def visit(self, node, symtable):
+        yield from self.visit(node.value, symtable)
+        yield from self.visit(node.slice, symtable)
+
     @_(ast.Keyword)
     def visit(self, node, symtable):
         yield from self.visit(node.value, symtable)

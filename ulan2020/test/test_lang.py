@@ -101,3 +101,6 @@ class FileTest(TestCase):
 
     def test_attribute(self):
         self.assertIs(run("let builtins = ::; let x = builtins->print;")["x"], print)
+
+    def test_subscript(self):
+        self.assertEqual(run("let x = {[ok]}[0];")["x"], "o")
