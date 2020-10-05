@@ -121,6 +121,18 @@ class CodegenVisitor(Visitor):
             if node.args.vararg is not None:
                 sub.LOAD_FAST(node.vararg.slot)
                 sub.BUILD_TUPLE_UNPACK(2)
+            if node.args.kwonlyargs:
+                for pat in node.args.kwonlyargs:
+                    sub.LOAD_FAST(pat.symbol.slot)
+                sub.LOAD_CONST(tuple(pat.arg for pat in node.args.kwonlyargs))
+                sub.BUILD_CONST_KEY_MAP(len(node.args.kwonlyargs))
+                if node.args.kwarg:
+                    sub.LOAD_FAST(node.kwarg.slot)
+                    sub.BUILD_MAP_UNPACK(2)
+                sub.BUILD_TUPLE(2)
+            elif node.args.kwarg:
+                sub.LOAD_FAST(node.kwarg.slot)
+                sub.BUILD_TUPLE(2)
             sub.CALL_FUNCTION(1)
             sub.RAISE_VARARGS(1)
             sub.emit(label_body)
